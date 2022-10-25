@@ -24,7 +24,21 @@ It will export the following metrics:
 
 ## Run it
 
+Create a configuration file similar to the following:
+```
+{
+    "username": "your@email",
+    "password": "your_password",
+    "devices": [
+        "10.0.0.10",
+        "10.0.0.11",
+        "10.0.0.12"
+    ]
+}
+```
+
+then build and run:
 ```
 go build
-./prometheus-tapo-exporter
+./prometheus-tapo-exporter -c ~/config.json
 ```
