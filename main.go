@@ -188,7 +188,9 @@ func main() {
 				// TODO parallelize
 				i, err := plug.GetDeviceInfo()
 				if err != nil {
-					log.Printf("GetDeviceInfo failed for plug %s: %v", plug.Addr, err)
+					// TODO retry
+					log.Printf("GetDeviceInfo failed for plug %s, skip this cycle: %v", plug.Addr, err)
+					continue
 				}
 				u, err := plug.GetDeviceUsage()
 				if err != nil {
