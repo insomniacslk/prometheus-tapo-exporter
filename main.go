@@ -189,18 +189,20 @@ func main() {
 				i, err := plug.GetDeviceInfo()
 				if err != nil {
 					// TODO retry
-					log.Printf("GetDeviceInfo failed for plug %s, skip this cycle: %v", plug.Addr, err)
+					log.Printf("GetDeviceInfo failed, skipping plug %s: %v", plug.Addr, err)
 					continue
 				}
 				u, err := plug.GetDeviceUsage()
 				if err != nil {
-					log.Printf("GetDeviceUsage failed for plug %s: %v", plug.Addr, err)
+					log.Printf("GetDeviceUsage failed, skipping plug %s: %v", plug.Addr, err)
+					continue
 				}
 				var e *tapo.EnergyUsage
 				if i.Model == "P110" {
 					e, err = plug.GetEnergyUsage()
 					if err != nil {
-						log.Printf("GetEnergyUsage failed for plug %s: %v", plug.Addr, err)
+						log.Printf("GetEnergyUsage failed, skipping plug %s, : %v", plug.Addr, err)
+						continue
 					}
 				}
 				labels := []string{
