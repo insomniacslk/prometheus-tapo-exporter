@@ -3,7 +3,9 @@
 This is a Prometheus exporter for TP-Link's Tapo P100 smart plugs with energy measurements.
 
 It will export the following metrics:
+* `tapo_plug_device_info`
 * `tapo_plug_device_on`
+* `tapo_plug_device_overheated`
 * `tapo_plug_time_usage_today`
 * `tapo_plug_time_usage_past7`
 * `tapo_plug_time_usage_past30`
