@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/netip"
+	"strconv"
 	"time"
 
 	"github.com/insomniacslk/tapo"
@@ -42,13 +43,13 @@ func LoadConfig(filepath string) (*Config, error) {
 	return &config, nil
 }
 
-func makeGauge(name, help string) *prometheus.GaugeVec {
+func makeGauge(name, help string, attributes []string) *prometheus.GaugeVec {
 	return prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: name,
 			Help: help,
 		},
-		deviceInfoAttributes,
+		attributes,
 	)
 }
 
@@ -57,31 +58,38 @@ var (
 	deviceInfoAttributes = []string{
 		"device_id", "nickname", "model", "mac", "oem_id",
 	}
+	deviceInfoAllAttributes = []string{
+		"device_id", "nickname", "model", "mac", "oem_id",
+		"fw_version", "hw_version", "type", "hw_id", "fw_id", "ip", "time_diff", "ssid", "rssi", "signal_level",
+		"latitude", "longitude", "lang", "avatar", "region", "specs", "has_set_location_info", "device_on", "on_time",
+	}
 
-	deviceOnGauge = makeGauge("tapo_plug_device_on", "Tapo plug - device on")
+	deviceInfoGauge = makeGauge("tapo_device_info", "Tapo - Device info", deviceInfoAllAttributes)
 
-	timeUsageTodayGauge  = makeGauge("tapo_plug_time_usage_today", "Tapo plug - time usage today")
-	timeUsagePast7Gauge  = makeGauge("tapo_plug_time_usage_past7", "Tapo plug - time usage past 7 days")
-	timeUsagePast30Gauge = makeGauge("tapo_plug_time_usage_past30", "Tapo plug - time usage past 30 days")
+	deviceOnGauge = makeGauge("tapo_plug_device_on", "Tapo plug - device on", deviceInfoAttributes)
 
-	powerUsageTodayGauge  = makeGauge("tapo_plug_power_usage_today", "Tapo plug - power usage today")
-	powerUsagePast7Gauge  = makeGauge("tapo_plug_power_usage_past7", "Tapo plug - power usage past 7 days")
-	powerUsagePast30Gauge = makeGauge("tapo_plug_power_usage_past30", "Tapo plug - power usage past 30 days")
+	timeUsageTodayGauge  = makeGauge("tapo_plug_time_usage_today", "Tapo plug - time usage today", deviceInfoAttributes)
+	timeUsagePast7Gauge  = makeGauge("tapo_plug_time_usage_past7", "Tapo plug - time usage past 7 days", deviceInfoAttributes)
+	timeUsagePast30Gauge = makeGauge("tapo_plug_time_usage_past30", "Tapo plug - time usage past 30 days", deviceInfoAttributes)
 
-	savedPowerTodayGauge  = makeGauge("tapo_plug_saved_power_today", "Tapo plug - saved power today")
-	savedPowerPast7Gauge  = makeGauge("tapo_plug_saved_usage_past7", "Tapo plug - saved power past 7 days")
-	savedPowerPast30Gauge = makeGauge("tapo_plug_saved_power_past30", "Tapo plug - saved power past 30 days")
+	powerUsageTodayGauge  = makeGauge("tapo_plug_power_usage_today", "Tapo plug - power usage today", deviceInfoAttributes)
+	powerUsagePast7Gauge  = makeGauge("tapo_plug_power_usage_past7", "Tapo plug - power usage past 7 days", deviceInfoAttributes)
+	powerUsagePast30Gauge = makeGauge("tapo_plug_power_usage_past30", "Tapo plug - power usage past 30 days", deviceInfoAttributes)
 
-	todayRuntimeGauge = makeGauge("tapo_plug_today_runtime", "Tapo plug - today runtime")
-	monthRuntimeGauge = makeGauge("tapo_plug_month_runtime", "Tapo plug - month runtime")
-	todayEnergyGauge  = makeGauge("tapo_plug_today_energy", "Tapo plug - today energy")
-	monthEnergyGauge  = makeGauge("tapo_plug_month_energy", "Tapo plug - month energy")
+	savedPowerTodayGauge  = makeGauge("tapo_plug_saved_power_today", "Tapo plug - saved power today", deviceInfoAttributes)
+	savedPowerPast7Gauge  = makeGauge("tapo_plug_saved_usage_past7", "Tapo plug - saved power past 7 days", deviceInfoAttributes)
+	savedPowerPast30Gauge = makeGauge("tapo_plug_saved_power_past30", "Tapo plug - saved power past 30 days", deviceInfoAttributes)
 
-	electricityCharge0Gauge = makeGauge("tapo_plug_electricity_charge_0", "Tapo plug - electricity charge 0")
-	electricityCharge1Gauge = makeGauge("tapo_plug_electricity_charge_1", "Tapo plug - electricity charge 1")
-	electricityCharge2Gauge = makeGauge("tapo_plug_electricity_charge_2", "Tapo plug - electricity charge 2")
+	todayRuntimeGauge = makeGauge("tapo_plug_today_runtime", "Tapo plug - today runtime", deviceInfoAttributes)
+	monthRuntimeGauge = makeGauge("tapo_plug_month_runtime", "Tapo plug - month runtime", deviceInfoAttributes)
+	todayEnergyGauge  = makeGauge("tapo_plug_today_energy", "Tapo plug - today energy", deviceInfoAttributes)
+	monthEnergyGauge  = makeGauge("tapo_plug_month_energy", "Tapo plug - month energy", deviceInfoAttributes)
 
-	currentPowerGauge = makeGauge("tapo_plug_current_power", "Tapo plug - current power")
+	electricityCharge0Gauge = makeGauge("tapo_plug_electricity_charge_0", "Tapo plug - electricity charge 0", deviceInfoAttributes)
+	electricityCharge1Gauge = makeGauge("tapo_plug_electricity_charge_1", "Tapo plug - electricity charge 1", deviceInfoAttributes)
+	electricityCharge2Gauge = makeGauge("tapo_plug_electricity_charge_2", "Tapo plug - electricity charge 2", deviceInfoAttributes)
+
+	currentPowerGauge = makeGauge("tapo_plug_current_power", "Tapo plug - current power", deviceInfoAttributes)
 )
 
 func validateDevices(devices []netip.Addr) ([]netip.Addr, error) {
@@ -126,6 +134,9 @@ func main() {
 	}
 
 	// register gauges
+	if err := prometheus.Register(deviceInfoGauge); err != nil {
+		log.Fatalf("Failed to register device_info gauge: %v", err)
+	}
 	if err := prometheus.Register(deviceOnGauge); err != nil {
 		log.Fatalf("Failed to register device_on gauge: %v", err)
 	}
@@ -208,7 +219,29 @@ func main() {
 				labels := []string{
 					i.DeviceID, i.DecodedNickname, i.Model, i.MAC, i.OEMID,
 				}
-
+				allLabels := append(
+					labels,
+					i.FWVersion,
+					i.HWVersion,
+					i.Type,
+					i.HWID,
+					i.FWID,
+					i.IP,
+					strconv.FormatInt(int64(i.TimeDiff), 10),
+					i.SSID,
+					strconv.FormatInt(int64(i.RSSI), 10),
+					strconv.FormatInt(int64(i.SignalLevel), 10),
+					strconv.FormatInt(int64(i.Latitude), 10),
+					strconv.FormatInt(int64(i.Longitude), 10),
+					i.Lang,
+					i.Avatar,
+					i.Region,
+					i.Specs,
+					strconv.FormatBool(i.HasSetLocationInfo),
+					strconv.FormatBool(i.DeviceON),
+					strconv.FormatInt(int64(i.OnTime), 10),
+				)
+				deviceInfoGauge.WithLabelValues(allLabels...).Set(1)
 				if i.DeviceON {
 					deviceOnGauge.WithLabelValues(labels...).Set(1)
 				} else {
