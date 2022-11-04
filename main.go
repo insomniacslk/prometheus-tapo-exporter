@@ -62,6 +62,7 @@ var (
 		"device_id", "nickname", "model", "mac", "oem_id",
 		"fw_version", "hw_version", "type", "hw_id", "fw_id", "ip", "time_diff", "ssid", "rssi", "signal_level",
 		"latitude", "longitude", "lang", "avatar", "region", "specs", "has_set_location_info", "device_on", "on_time",
+		"overheated", "power_protection_status", "location",
 	}
 
 	deviceInfoGauge = makeGauge("tapo_device_info", "Tapo - Device info", deviceInfoAllAttributes)
@@ -228,7 +229,7 @@ func main() {
 					i.FWID,
 					i.IP,
 					strconv.FormatInt(int64(i.TimeDiff), 10),
-					i.SSID,
+					i.DecodedSSID,
 					strconv.FormatInt(int64(i.RSSI), 10),
 					strconv.FormatInt(int64(i.SignalLevel), 10),
 					strconv.FormatInt(int64(i.Latitude), 10),
@@ -240,6 +241,9 @@ func main() {
 					strconv.FormatBool(i.HasSetLocationInfo),
 					strconv.FormatBool(i.DeviceON),
 					strconv.FormatInt(int64(i.OnTime), 10),
+					strconv.FormatBool(i.OverHeated),
+					i.PowerProtectionStatus,
+					i.Location,
 				)
 				deviceInfoGauge.WithLabelValues(allLabels...).Set(1)
 				if i.DeviceON {
