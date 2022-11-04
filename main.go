@@ -67,7 +67,8 @@ var (
 
 	deviceInfoGauge = makeGauge("tapo_device_info", "Tapo - Device info", deviceInfoAllAttributes)
 
-	deviceOnGauge = makeGauge("tapo_plug_device_on", "Tapo plug - device on", deviceInfoAttributes)
+	deviceOnGauge         = makeGauge("tapo_plug_device_on", "Tapo plug - device on", deviceInfoAttributes)
+	deviceOverheatedGauge = makeGauge("tapo_plug_device_overheated", "Tapo plug - device overheated", deviceInfoAttributes)
 
 	timeUsageTodayGauge  = makeGauge("tapo_plug_time_usage_today", "Tapo plug - time usage today", deviceInfoAttributes)
 	timeUsagePast7Gauge  = makeGauge("tapo_plug_time_usage_past7", "Tapo plug - time usage past 7 days", deviceInfoAttributes)
@@ -140,6 +141,9 @@ func main() {
 	}
 	if err := prometheus.Register(deviceOnGauge); err != nil {
 		log.Fatalf("Failed to register device_on gauge: %v", err)
+	}
+	if err := prometheus.Register(deviceOverheatedGauge); err != nil {
+		log.Fatalf("Failed to register device_overheated gauge: %v", err)
 	}
 	if err := prometheus.Register(timeUsageTodayGauge); err != nil {
 		log.Fatalf("Failed to register time_usage_today gauge: %v", err)
@@ -250,6 +254,11 @@ func main() {
 					deviceOnGauge.WithLabelValues(labels...).Set(1)
 				} else {
 					deviceOnGauge.WithLabelValues(labels...).Set(0)
+				}
+				if i.OverHeated {
+					deviceOverheatedGauge.WithLabelValues(labels...).Set(1)
+				} else {
+					deviceOverheatedGauge.WithLabelValues(labels...).Set(0)
 				}
 				timeUsageTodayGauge.WithLabelValues(labels...).Set(float64(u.TimeUsage.Today))
 				timeUsagePast7Gauge.WithLabelValues(labels...).Set(float64(u.TimeUsage.Past7))
