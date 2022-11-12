@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +15,7 @@ import (
 	"time"
 
 	"github.com/insomniacslk/tapo"
+	"github.com/insomniacslk/xjson"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -25,9 +29,10 @@ var (
 
 // Config is the configuration file type.
 type Config struct {
-	Username string       `json:"username"`
-	Password string       `json:"password"`
-	Devices  []netip.Addr `json:"devices"`
+	Username   string       `json:"username"`
+	Password   string       `json:"password"`
+	Devices    []netip.Addr `json:"devices"`
+	DevicesURL *xjson.URL   `json:"devices_url,omitempty"`
 }
 
 // LoadConfig loads the configuration file into a Config type.
@@ -119,7 +124,35 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load configuration file '%s': %v", *flagConfigFile, err)
 	}
-	devices, err := validateDevices(config.Devices)
+	devices := config.Devices
+	if config.DevicesURL != nil {
+		// also get a device list from an URL
+		resp, err := http.Get((*config.DevicesURL).String())
+		if err != nil {
+			log.Fatalf("Failed to retrieve devices URL '%s': %v", *config.DevicesURL, err)
+		}
+		if resp.StatusCode != 200 {
+			_ = resp.Body.Close()
+			log.Fatalf("HTTP request failed, expected 200 OK, got %s", resp.Status)
+		}
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			_ = resp.Body.Close()
+			log.Fatalf("Failed to read HTTP body: %v", err)
+		}
+		_ = resp.Body.Close()
+		scanner := bufio.NewScanner(bytes.NewReader(data))
+		for scanner.Scan() {
+			line := scanner.Text()
+			addr, err := netip.ParseAddr(line)
+			if err != nil {
+				log.Printf("Skip invalid IP address '%s'", line)
+				continue
+			}
+			devices = append(devices, addr)
+		}
+	}
+	devices, err = validateDevices(devices)
 	if err != nil {
 		log.Fatalf("Device validation failed: %v", err)
 	}

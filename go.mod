@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/insomniacslk/tapo v0.0.0-20221025193547-7adf95f844cb
+	github.com/insomniacslk/xjson v0.0.0-20210106140854-1589ccfd1a1a
 	github.com/prometheus/client_golang v1.13.0
 )
 
