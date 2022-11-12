@@ -126,6 +126,7 @@ func main() {
 	}
 	devices := config.Devices
 	if config.DevicesURL != nil {
+		log.Printf("Retrieving devices list from '%s'", *config.DevicesURL)
 		// also get a device list from an URL
 		resp, err := http.Get((*config.DevicesURL).String())
 		if err != nil {
@@ -142,6 +143,7 @@ func main() {
 		}
 		_ = resp.Body.Close()
 		scanner := bufio.NewScanner(bytes.NewReader(data))
+		count := 0
 		for scanner.Scan() {
 			line := scanner.Text()
 			addr, err := netip.ParseAddr(line)
@@ -150,7 +152,9 @@ func main() {
 				continue
 			}
 			devices = append(devices, addr)
+			count++
 		}
+		log.Printf("Got %d devices from URL", count)
 	}
 	devices, err = validateDevices(devices)
 	if err != nil {
