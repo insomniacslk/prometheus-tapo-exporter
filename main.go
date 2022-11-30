@@ -7,10 +7,10 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/netip"
+	"os"
 	"strconv"
 	"time"
 
@@ -37,7 +37,7 @@ type Config struct {
 
 // LoadConfig loads the configuration file into a Config type.
 func LoadConfig(filepath string) (*Config, error) {
-	data, err := ioutil.ReadFile(filepath)
+	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
