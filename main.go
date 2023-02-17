@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
+	"path"
 	"strconv"
 	"time"
 
@@ -100,6 +101,9 @@ var (
 )
 
 func validateDevices(devices []netip.Addr) ([]netip.Addr, error) {
+	if len(devices) == 0 {
+		return nil, fmt.Errorf("device list is empty")
+	}
 	// sanity checks, and remove duplicates
 	tmap := make(map[netip.Addr]struct{})
 	for _, d := range devices {
@@ -126,22 +130,35 @@ func main() {
 	}
 	devices := config.Devices
 	if config.DevicesURL != nil {
-		log.Printf("Retrieving devices list from '%s'", *config.DevicesURL)
 		// also get a device list from an URL
-		resp, err := http.Get((*config.DevicesURL).String())
-		if err != nil {
-			log.Fatalf("Failed to retrieve devices URL '%s': %v", *config.DevicesURL, err)
-		}
-		if resp.StatusCode != 200 {
+		var (
+			data []byte
+			err  error
+		)
+		log.Printf("Retrieving devices list from '%s'", *config.DevicesURL)
+		if config.DevicesURL.Scheme == "file" {
+			filePath := path.Join(config.DevicesURL.Host, config.DevicesURL.Path)
+			data, err = os.ReadFile(filePath)
+			if err != nil {
+				log.Fatalf("Failed to read '%s': %v", filePath, err)
+			}
+		} else {
+			var resp *http.Response
+			resp, err = http.Get((*config.DevicesURL).String())
+			if err != nil {
+				log.Fatalf("Failed to retrieve devices URL '%s': %v", *config.DevicesURL, err)
+			}
+			if resp.StatusCode != 200 {
+				_ = resp.Body.Close()
+				log.Fatalf("HTTP request failed, expected 200 OK, got %s", resp.Status)
+			}
+			data, err = io.ReadAll(resp.Body)
+			if err != nil {
+				_ = resp.Body.Close()
+				log.Fatalf("Failed to read HTTP body: %v", err)
+			}
 			_ = resp.Body.Close()
-			log.Fatalf("HTTP request failed, expected 200 OK, got %s", resp.Status)
 		}
-		data, err := io.ReadAll(resp.Body)
-		if err != nil {
-			_ = resp.Body.Close()
-			log.Fatalf("Failed to read HTTP body: %v", err)
-		}
-		_ = resp.Body.Close()
 		scanner := bufio.NewScanner(bytes.NewReader(data))
 		count := 0
 		for scanner.Scan() {
