@@ -179,7 +179,7 @@ func main() {
 	}
 	plugs := make([]*tapo.Plug, 0, len(devices))
 	for _, addr := range devices {
-		plugs = append(plugs, tapo.NewPlug(addr, config.Username, config.Password, nil))
+		plugs = append(plugs, tapo.NewPlug(addr, nil))
 	}
 	fmt.Printf("Monitoring %d Tapo plugs\n", len(plugs))
 	for _, plug := range plugs {
