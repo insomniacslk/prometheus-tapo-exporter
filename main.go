@@ -256,14 +256,30 @@ func main() {
 			for _, plug := range plugs {
 				log.Printf("Fetching metrics for plug %s", plug.Addr)
 				// TODO parallelize
-				i, err := plug.GetDeviceInfo()
-				if err != nil {
-					// TODO retry
-					log.Fatalf("GetDeviceInfo for plug '%s' failed: %v", plug.Addr, err)
+				var i *tapo.DeviceInfo
+				for attempt := 1; attempt <= 3; attempt++ {
+					i, err = plug.GetDeviceInfo()
+					if err != nil {
+						// TODO retry
+						log.Printf("GetDeviceInfo for plug '%s' failed at attempt %d, trying again: %v", plug.Addr, attempt, err)
+					} else {
+						break
+					}
 				}
-				u, err := plug.GetDeviceUsage()
 				if err != nil {
-					log.Fatalf("GetDeviceUsage for plug '%s' failed: %v", plug.Addr, err)
+					log.Fatalf("GetDeviceInfo failed after 3 attempts. Last error: %v", err)
+				}
+				var u *tapo.DeviceUsage
+				for attempt := 1; attempt <= 3; attempt++ {
+					u, err = plug.GetDeviceUsage()
+					if err != nil {
+						log.Printf("GetDeviceUsage for plug '%s' failed at attempt %d, trying again: %v", plug.Addr, attempt, err)
+					} else {
+						break
+					}
+				}
+				if err != nil {
+					log.Fatalf("GetDeviceUsage failed after 3 attempts. Last error: %v", err)
 				}
 				var e *tapo.EnergyUsage
 				if i.Model == "P110" {
