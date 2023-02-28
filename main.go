@@ -267,9 +267,16 @@ func main() {
 				}
 				var e *tapo.EnergyUsage
 				if i.Model == "P110" {
-					e, err = plug.GetEnergyUsage()
+					for attempt := 1; attempt <= 3; attempt++ {
+						e, err = plug.GetEnergyUsage()
+						if err != nil {
+							log.Printf("GetEnergyUsage for plug '%s' failed at attempt %d, trying again : %v", plug.Addr, attempt, err)
+						} else {
+							break
+						}
+					}
 					if err != nil {
-						log.Fatalf("GetEnergyUsage for plug '%s' failed, : %v", plug.Addr, err)
+						log.Fatalf("GetEnergyUsage failed after 3 attempts. Last error: %v", err)
 					}
 				}
 				labels := []string{
