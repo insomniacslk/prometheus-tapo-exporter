@@ -53,7 +53,7 @@ func main() {
 	var output string
 	idx := 0
 	for _, client := range clients {
-		if client.Name == "p110" || strings.Contains(client.Name, "tapo") {
+		if client.Name == "p110" || strings.Contains(client.Name, "tapo") || strings.Contains(client.Name, "Tapo") {
 			// NOTE: these device names only get Tapo P100 and P110 plugs
 			fmt.Println(idx+1, client.ID, client.Hostname, client.IP, client.Name, client.Mac, client.LastSeen)
 			output += fmt.Sprintf("%s\n", client.IP)
