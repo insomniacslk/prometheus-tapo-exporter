@@ -1,6 +1,6 @@
 # prometheus-tapo-exporter
 
-This is a Prometheus exporter for TP-Link's Tapo P100 smart plugs with energy measurements.
+This is a Prometheus exporter for TP-Link's Tapo P100/P110 smart plugs with energy measurements.
 
 It will export the following metrics:
 * `tapo_plug_device_info`
