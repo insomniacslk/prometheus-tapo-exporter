@@ -23,10 +23,11 @@ import (
 )
 
 var (
-	flagPath          = flag.String("p", "/metrics", "HTTP path where to expose metrics to")
-	flagListen        = flag.String("l", ":9105", "Address to listen to")
-	flagConfigFile    = flag.String("c", "config.json", "Configuration file")
-	flagSleepInterval = flag.Duration("i", time.Minute, "Interval between speedtest executions, expressed as a Go duration string")
+	flagPath            = flag.String("p", "/metrics", "HTTP path where to expose metrics to")
+	flagListen          = flag.String("l", ":9105", "Address to listen to")
+	flagConfigFile      = flag.String("c", "config.json", "Configuration file")
+	flagSleepInterval   = flag.Duration("i", time.Minute, "Interval between speedtest executions, expressed as a Go duration string")
+	flagStopOnKlapError = flag.Bool("k", false, "Stop the exporter if login fails on a plug because of unsupported KLAP protocol")
 )
 
 // Config is the configuration file type.
@@ -178,19 +179,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Device validation failed: %v", err)
 	}
-	plugs := make([]*tapo.Plug, 0, len(devices))
+	allPlugs := make([]*tapo.Plug, 0, len(devices))
 	for _, addr := range devices {
-		plugs = append(plugs, tapo.NewPlug(addr, nil))
+		allPlugs = append(allPlugs, tapo.NewPlug(addr, nil))
 	}
-	fmt.Printf("Monitoring %d Tapo plugs\n", len(plugs))
-	for _, plug := range plugs {
+	fmt.Printf("Trying to log in to %d Tapo plugs\n", len(allPlugs))
+	plugs := make([]*tapo.Plug, 0)
+	for _, plug := range allPlugs {
 		if err := plug.Login(config.Username, config.Password); err != nil {
 			log.Printf("Error: login failed for plug %s: %v", plug.Addr, err)
 			// some devices with recent firmware require the newer KLAP
 			// protocol from TP-Link, and will fail login until it is
 			// implemented. Handle this error specifically.
 			var te tapo.TapoError
-			if errors.As(err, &te) {
+			if !*flagStopOnKlapError && errors.As(err, &te) {
 				if te == 1003 {
 					log.Printf("Warning: login failed for plug %s, continuing because it's probably a firmware with the new KLAP protocol': %v", plug.Addr, err)
 					continue
@@ -199,7 +201,9 @@ func main() {
 			log.Printf("Error: login failed for plug %s: %v", plug.Addr, err)
 			return
 		}
+		plugs = append(plugs, plug)
 	}
+	fmt.Printf("Monitoring %d Tapo plugs (ignored %d plugs)\n", len(plugs), len(allPlugs)-len(plugs))
 
 	// register gauges
 	if err := prometheus.Register(deviceInfoGauge); err != nil {
