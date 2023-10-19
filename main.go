@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -184,6 +185,17 @@ func main() {
 	fmt.Printf("Monitoring %d Tapo plugs\n", len(plugs))
 	for _, plug := range plugs {
 		if err := plug.Login(config.Username, config.Password); err != nil {
+			log.Printf("Error: login failed for plug %s: %v", plug.Addr, err)
+			// some devices with recent firmware require the newer KLAP
+			// protocol from TP-Link, and will fail login until it is
+			// implemented. Handle this error specifically.
+			var te tapo.TapoError
+			if errors.As(err, &te) {
+				if te == 1003 {
+					log.Printf("Warning: login failed for plug %s, continuing because it's probably a firmware with the new KLAP protocol': %v", plug.Addr, err)
+					continue
+				}
+			}
 			log.Printf("Error: login failed for plug %s: %v", plug.Addr, err)
 			return
 		}
