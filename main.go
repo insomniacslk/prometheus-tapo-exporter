@@ -186,7 +186,7 @@ func main() {
 	fmt.Printf("Trying to log in to %d Tapo plugs\n", len(allPlugs))
 	plugs := make([]*tapo.Plug, 0)
 	for _, plug := range allPlugs {
-		if err := plug.Login(config.Username, config.Password); err != nil {
+		if err := plug.Handshake(config.Username, config.Password); err != nil {
 			log.Printf("Error: login failed for plug %s: %v", plug.Addr, err)
 			// some devices with recent firmware require the newer KLAP
 			// protocol from TP-Link, and will fail login until it is

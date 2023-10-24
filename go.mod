@@ -1,17 +1,17 @@
 module github.com/insomniacslk/prometheus-tapo-exporter
 
-go 1.19
+go 1.21.1
 
 require (
-	github.com/insomniacslk/tapo v0.0.0-20231019103123-ee23a2f6bc5a
-	github.com/insomniacslk/xjson v0.0.0-20210106140854-1589ccfd1a1a
+	github.com/insomniacslk/tapo v0.0.0-20231024225910-21ec6127abf7
+	github.com/insomniacslk/xjson v0.0.0-20231023101448-2249e546a131
 	github.com/prometheus/client_golang v1.17.0
 	github.com/unpoller/unifi v0.3.15
 )
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/brianvoe/gofakeit/v6 v6.23.2 // indirect
+	github.com/brianvoe/gofakeit/v6 v6.24.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.1 // indirect
