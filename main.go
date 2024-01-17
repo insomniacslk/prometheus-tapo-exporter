@@ -26,7 +26,8 @@ var (
 	flagPath            = flag.String("p", "/metrics", "HTTP path where to expose metrics to")
 	flagListen          = flag.String("l", ":9105", "Address to listen to")
 	flagConfigFile      = flag.String("c", "config.json", "Configuration file")
-	flagSleepInterval   = flag.Duration("i", time.Minute, "Interval between speedtest executions, expressed as a Go duration string")
+	flagSleepInterval   = flag.Duration("i", time.Minute, "Interval between reading updates, expressed as a Go duration string")
+	flagRetryInterval   = flag.Duration("R", 2*time.Second, "Interval between attempts to read a device's info, expressed as a Go duration string")
 	flagStopOnKlapError = flag.Bool("k", false, "Stop the exporter if login fails on a plug because of unsupported KLAP protocol")
 )
 
@@ -184,9 +185,8 @@ func main() {
 		allPlugs = append(allPlugs, tapo.NewPlug(addr, nil))
 	}
 	fmt.Printf("Trying to log in to %d Tapo plugs\n", len(allPlugs))
-	plugs := make([]*tapo.Plug, 0)
-	for _, plug := range allPlugs {
-		if err := plug.Handshake(config.Username, config.Password); err != nil {
+	plugLogin := func(plug *tapo.Plug, username, password string, stopOnKlapError bool) error {
+		if err := plug.Handshake(username, password); err != nil {
 			log.Printf("Error: login failed for plug %s: %v", plug.Addr, err)
 			// some devices with recent firmware require the newer KLAP
 			// protocol from TP-Link, and will fail login until it is
@@ -195,11 +195,17 @@ func main() {
 			if !*flagStopOnKlapError && errors.As(err, &te) {
 				if te == 1003 {
 					log.Printf("Warning: login failed for plug %s, continuing because it's probably a firmware with the new KLAP protocol': %v", plug.Addr, err)
-					continue
+					return nil
 				}
 			}
-			log.Printf("Error: login failed for plug %s: %v", plug.Addr, err)
-			return
+			return err
+		}
+		return nil
+	}
+	plugs := make([]*tapo.Plug, 0)
+	for _, plug := range allPlugs {
+		if err := plugLogin(plug, config.Username, config.Password, *flagStopOnKlapError); err != nil {
+			log.Printf("Error: login failed for plug '%s': %v", plug.Addr, err)
 		}
 		plugs = append(plugs, plug)
 	}
@@ -271,13 +277,20 @@ func main() {
 		for {
 			for _, plug := range plugs {
 				log.Printf("Fetching metrics for plug %s", plug.Addr)
+				plug = tapo.NewPlug(plug.Addr, nil)
+				if err := plugLogin(plug, config.Username, config.Password, *flagStopOnKlapError); err != nil {
+					log.Fatalf("Failed to login on plug '%s': %v", plug.Addr, err)
+				}
 				// TODO parallelize
 				var i *tapo.DeviceInfo
-				for attempt := 1; attempt <= 3; attempt++ {
+				const maxAttempts = 3
+				for attempt := 1; attempt <= maxAttempts; attempt++ {
 					i, err = plug.GetDeviceInfo()
 					if err != nil {
-						// TODO retry
-						log.Printf("GetDeviceInfo for plug '%s' failed at attempt %d, trying again: %v", plug.Addr, attempt, err)
+						log.Printf("GetDeviceInfo for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
+						if attempt < maxAttempts {
+							time.Sleep(*flagRetryInterval)
+						}
 					} else {
 						break
 					}
@@ -286,10 +299,13 @@ func main() {
 					log.Fatalf("GetDeviceInfo failed after 3 attempts. Last error: %v", err)
 				}
 				var u *tapo.DeviceUsage
-				for attempt := 1; attempt <= 3; attempt++ {
+				for attempt := 1; attempt <= maxAttempts; attempt++ {
 					u, err = plug.GetDeviceUsage()
 					if err != nil {
-						log.Printf("GetDeviceUsage for plug '%s' failed at attempt %d, trying again: %v", plug.Addr, attempt, err)
+						log.Printf("GetDeviceUsage for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
+						if attempt < maxAttempts {
+							time.Sleep(*flagRetryInterval)
+						}
 					} else {
 						break
 					}
@@ -299,10 +315,13 @@ func main() {
 				}
 				var e *tapo.EnergyUsage
 				if i.Model == "P110" {
-					for attempt := 1; attempt <= 3; attempt++ {
+					for attempt := 1; attempt <= maxAttempts; attempt++ {
 						e, err = plug.GetEnergyUsage()
 						if err != nil {
-							log.Printf("GetEnergyUsage for plug '%s' failed at attempt %d, trying again : %v", plug.Addr, attempt, err)
+							log.Printf("GetEnergyUsage for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
+							if attempt < maxAttempts {
+								time.Sleep(*flagRetryInterval)
+							}
 						} else {
 							break
 						}
