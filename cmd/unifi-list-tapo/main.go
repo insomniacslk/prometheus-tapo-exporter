@@ -18,6 +18,14 @@ var (
 	flagOutfile  = flag.String("o", "tapo_devices.txt", "Output file")
 )
 
+func isTapoPlugWithMeterByName(name string) bool {
+	name = strings.ToLower(name)
+	return name == "p110" ||
+		name == "p115" ||
+		strings.Contains(name, "tapo") ||
+		strings.Contains(name, "Tapo")
+}
+
 func main() {
 	flag.Parse()
 	c := unifi.Config{
@@ -53,7 +61,7 @@ func main() {
 	var output string
 	idx := 0
 	for _, client := range clients {
-		if client.Name == "p110" || strings.Contains(client.Name, "tapo") || strings.Contains(client.Name, "Tapo") {
+		if isTapoPlugWithMeterByName(client.Name) {
 			// NOTE: these device names only get Tapo P100 and P110 plugs
 			fmt.Println(idx+1, client.ID, client.Hostname, client.IP, client.Name, client.Mac, client.LastSeen)
 			output += fmt.Sprintf("%s\n", client.IP)
