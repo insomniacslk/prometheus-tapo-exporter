@@ -6,7 +6,7 @@ require (
 	github.com/insomniacslk/tapo v1.0.0
 	github.com/insomniacslk/xjson v0.0.0-20240314172816-ab1449dc107f
 	github.com/prometheus/client_golang v1.19.0
-	github.com/unpoller/unifi v0.3.15
+	github.com/unpoller/unifi v0.4.3
 )
 
 require (
@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/client_model v0.6.0 // indirect
 	github.com/prometheus/common v0.50.0 // indirect
 	github.com/prometheus/procfs v0.13.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 )
