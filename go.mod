@@ -3,7 +3,7 @@ module github.com/insomniacslk/prometheus-tapo-exporter
 go 1.21.1
 
 require (
-	github.com/insomniacslk/tapo v1.0.0
+	github.com/insomniacslk/tapo v1.0.1
 	github.com/insomniacslk/xjson v0.0.0-20240314172816-ab1449dc107f
 	github.com/prometheus/client_golang v1.19.0
 	github.com/unpoller/unifi v0.4.3
