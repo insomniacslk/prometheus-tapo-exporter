@@ -314,7 +314,7 @@ func main() {
 					log.Fatalf("GetDeviceUsage failed after 3 attempts. Last error: %v", err)
 				}
 				var e *tapo.EnergyUsage
-				if i.Model == "P110" {
+				if i.Model == "P110" || i.Model == "P115" {
 					for attempt := 1; attempt <= maxAttempts; attempt++ {
 						e, err = plug.GetEnergyUsage()
 						if err != nil {
