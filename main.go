@@ -314,6 +314,8 @@ func main() {
 					log.Fatalf("GetDeviceUsage failed after 3 attempts. Last error: %v", err)
 				}
 				var e *tapo.EnergyUsage
+				// TODO always try to get energy usage without relying on a
+				// hardcoded list
 				if i.Model == "P110" || i.Model == "P115" {
 					for attempt := 1; attempt <= maxAttempts; attempt++ {
 						e, err = plug.GetEnergyUsage()
@@ -329,6 +331,8 @@ func main() {
 					if err != nil {
 						log.Fatalf("GetEnergyUsage failed after 3 attempts. Last error: %v", err)
 					}
+				} else {
+					log.Printf("Ignoring device without power information ip=%s, model=%s", i.IP, i.Model)
 				}
 				labels := []string{
 					i.DeviceID, i.DecodedNickname, i.Model, i.MAC, i.OEMID,
