@@ -73,8 +73,10 @@ var (
 		"latitude", "longitude", "lang", "avatar", "region", "specs", "has_set_location_info", "device_on", "on_time",
 		"overheated", "power_protection_status", "location",
 	}
+	deviceRequestFailedAttributes = []string{"ip_address", "error"}
 
-	deviceInfoGauge = makeGauge("tapo_device_info", "Tapo - Device info", deviceInfoAllAttributes)
+	deviceInfoGauge          = makeGauge("tapo_device_info", "Tapo plug - Device info", deviceInfoAllAttributes)
+	deviceRequestFailedGauge = makeGauge("tapo_device_request_failed", "Tapo plug - Device request failed", deviceRequestFailedAttributes)
 
 	deviceOnGauge         = makeGauge("tapo_plug_device_on", "Tapo plug - device on", deviceInfoAttributes)
 	deviceOverheatedGauge = makeGauge("tapo_plug_device_overheated", "Tapo plug - device overheated", deviceInfoAttributes)
@@ -215,6 +217,9 @@ func main() {
 	if err := prometheus.Register(deviceInfoGauge); err != nil {
 		log.Fatalf("Failed to register device_info gauge: %v", err)
 	}
+	if err := prometheus.Register(deviceRequestFailedGauge); err != nil {
+		log.Fatalf("Failed to register device_request_failed gauge: %v", err)
+	}
 	if err := prometheus.Register(deviceOnGauge); err != nil {
 		log.Fatalf("Failed to register device_on gauge: %v", err)
 	}
@@ -279,7 +284,9 @@ func main() {
 				log.Printf("Fetching metrics for plug %s", plug.Addr)
 				plug = tapo.NewPlug(plug.Addr, nil)
 				if err := plugLogin(plug, config.Username, config.Password, *flagStopOnKlapError); err != nil {
-					log.Fatalf("Failed to login on plug '%s': %v", plug.Addr, err)
+					deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Set(1)
+					log.Printf("Warning: failed to log in on plug '%s': %v", plug.Addr, err)
+					continue
 				}
 				// TODO parallelize
 				var i *tapo.DeviceInfo
