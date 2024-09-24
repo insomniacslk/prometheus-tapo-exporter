@@ -192,7 +192,7 @@ func main() {
 			// protocol from TP-Link, and will fail login until it is
 			// implemented. Handle this error specifically.
 			var te tapo.TapoError
-			if !*flagStopOnKlapError && errors.As(err, &te) {
+			if !stopOnKlapError && errors.As(err, &te) {
 				if te == 1003 {
 					log.Printf("Warning: login failed for plug %s, continuing because it's probably a firmware with the new KLAP protocol': %v", plug.Addr, err)
 					return nil
