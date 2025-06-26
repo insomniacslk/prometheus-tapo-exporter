@@ -284,7 +284,7 @@ func main() {
 				log.Printf("Fetching metrics for plug %s", plug.Addr)
 				plug = tapo.NewPlug(plug.Addr, nil)
 				if err := plugLogin(plug, config.Username, config.Password, *flagStopOnKlapError); err != nil {
-					deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Set(1)
+					deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Inc()
 					log.Printf("Warning: failed to log in on plug '%s': %v", plug.Addr, err)
 					continue
 				}
@@ -294,6 +294,7 @@ func main() {
 				for attempt := 1; attempt <= maxAttempts; attempt++ {
 					i, err = plug.GetDeviceInfo()
 					if err != nil {
+						deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Inc()
 						log.Printf("GetDeviceInfo for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
 						if attempt < maxAttempts {
 							time.Sleep(*flagRetryInterval)
@@ -309,6 +310,7 @@ func main() {
 				for attempt := 1; attempt <= maxAttempts; attempt++ {
 					u, err = plug.GetDeviceUsage()
 					if err != nil {
+						deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Inc()
 						log.Printf("GetDeviceUsage for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
 						if attempt < maxAttempts {
 							time.Sleep(*flagRetryInterval)
@@ -327,6 +329,7 @@ func main() {
 					for attempt := 1; attempt <= maxAttempts; attempt++ {
 						e, err = plug.GetEnergyUsage()
 						if err != nil {
+							deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Inc()
 							log.Printf("GetEnergyUsage for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
 							if attempt < maxAttempts {
 								time.Sleep(*flagRetryInterval)
