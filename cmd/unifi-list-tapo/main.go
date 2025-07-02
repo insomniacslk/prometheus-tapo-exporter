@@ -18,14 +18,24 @@ var (
 	flagOutfile  = flag.String("o", "tapo_devices.txt", "Output file")
 )
 
+var knownTapoPlugs = []string{
+	// NOTE: these are the plugs I own and that I could test against. Feel free to request to add more plugs
+	"p110",
+	"p115",
+	"p125m",
+}
+
 func isTapoPlugWithMeterByName(client *unifi.Client) bool {
 	for _, k := range []string{
 		strings.ToLower(client.Name),
 		strings.ToLower(client.Hostname),
 	} {
-		if k == "p110" ||
-			k == "p115" ||
-			strings.Contains(k, "tapo") ||
+		for _, knownTapoPlug := range knownTapoPlugs {
+			if k == knownTapoPlug {
+				return true
+			}
+		}
+		if strings.Contains(k, "tapo") ||
 			strings.Contains(k, "Tapo") {
 			return true
 		}
