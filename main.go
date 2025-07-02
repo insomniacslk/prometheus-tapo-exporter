@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/insomniacslk/tapo"
@@ -37,6 +38,13 @@ type Config struct {
 	Password   string       `json:"password"`
 	Devices    []netip.Addr `json:"devices"`
 	DevicesURL *xjson.URL   `json:"devices_url,omitempty"`
+}
+
+var modelsWithPowerInformation = []string{
+	// NOTE: these are the ones known to me. Feel free to suggest to add more
+	"P110",
+	"P115",
+	"P125M",
 }
 
 // LoadConfig loads the configuration file into a Config type.
@@ -325,7 +333,13 @@ func main() {
 				var e *tapo.EnergyUsage
 				// TODO always try to get energy usage without relying on a
 				// hardcoded list
-				if i.Model == "P110" || i.Model == "P115" {
+				hasPowerInformation := false
+				for _, m := range modelsWithPowerInformation {
+					if strings.ToLower(i.Model) == strings.ToLower(m) {
+						hasPowerInformation = true
+					}
+				}
+				if hasPowerInformation {
 					for attempt := 1; attempt <= maxAttempts; attempt++ {
 						e, err = plug.GetEnergyUsage()
 						if err != nil {
