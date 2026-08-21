@@ -81,7 +81,7 @@ var (
 		"latitude", "longitude", "lang", "avatar", "region", "specs", "has_set_location_info", "device_on", "on_time",
 		"overheated", "power_protection_status", "location",
 	}
-	deviceRequestFailedAttributes = []string{"ip_address", "error"}
+	deviceRequestFailedAttributes = []string{"ip_address", "nickname", "error"}
 
 	deviceInfoGauge          = makeGauge("tapo_device_info", "Tapo plug - Device info", deviceInfoAllAttributes)
 	deviceRequestFailedGauge = makeGauge("tapo_device_request_failed", "Tapo plug - Device request failed", deviceRequestFailedAttributes)
@@ -287,12 +287,19 @@ func main() {
 	}
 
 	go func() {
+		// Last known nickname of each plug, by address. A plug's nickname is
+		// only known after a successful GetDeviceInfo, so a failure is labelled
+		// with the nickname seen in a previous iteration, if any.
+		nicknames := make(map[netip.Addr]string)
+		requestFailed := func(plug *tapo.Plug, err error) {
+			deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), nicknames[plug.Addr], err.Error()).Inc()
+		}
 		for {
 			for _, plug := range plugs {
 				log.Printf("Fetching metrics for plug %s", plug.Addr)
 				plug = tapo.NewPlug(plug.Addr, nil)
 				if err := plugLogin(plug, config.Username, config.Password, *flagStopOnKlapError); err != nil {
-					deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Inc()
+					requestFailed(plug, err)
 					log.Printf("Warning: failed to log in on plug '%s': %v", plug.Addr, err)
 					continue
 				}
@@ -302,7 +309,7 @@ func main() {
 				for attempt := 1; attempt <= maxAttempts; attempt++ {
 					i, err = plug.GetDeviceInfo()
 					if err != nil {
-						deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Inc()
+						requestFailed(plug, err)
 						log.Printf("GetDeviceInfo for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
 						if attempt < maxAttempts {
 							time.Sleep(*flagRetryInterval)
@@ -314,11 +321,12 @@ func main() {
 				if err != nil {
 					log.Fatalf("GetDeviceInfo failed after 3 attempts. Last error: %v", err)
 				}
+				nicknames[plug.Addr] = i.DecodedNickname
 				var u *tapo.DeviceUsage
 				for attempt := 1; attempt <= maxAttempts; attempt++ {
 					u, err = plug.GetDeviceUsage()
 					if err != nil {
-						deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Inc()
+						requestFailed(plug, err)
 						log.Printf("GetDeviceUsage for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
 						if attempt < maxAttempts {
 							time.Sleep(*flagRetryInterval)
@@ -343,7 +351,7 @@ func main() {
 					for attempt := 1; attempt <= maxAttempts; attempt++ {
 						e, err = plug.GetEnergyUsage()
 						if err != nil {
-							deviceRequestFailedGauge.WithLabelValues(plug.Addr.String(), err.Error()).Inc()
+							requestFailed(plug, err)
 							log.Printf("GetEnergyUsage for plug '%s' failed at attempt %d, trying again in %s: %v", plug.Addr, attempt, *flagRetryInterval, err)
 							if attempt < maxAttempts {
 								time.Sleep(*flagRetryInterval)
