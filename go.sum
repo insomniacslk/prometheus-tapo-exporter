@@ -1,3 +1,5 @@
+filippo.io/nistec v0.0.4 h1:F14ZHT5htWlMnQVPndX9ro9arf56cBhQxq4LnDI491s=
+filippo.io/nistec v0.0.4/go.mod h1:PK/lw8I1gQT4hUML4QGaqljwdDaFcMyFKSXN7kjrtKI=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/brianvoe/gofakeit/v6 v6.28.0 h1:Xib46XXuQfmlLS2EXRuJpqcw8St6qSZz75OUo0tgAW4=
@@ -8,8 +10,8 @@ github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
-github.com/insomniacslk/tapo v1.1.0 h1:Z1s1EjtdVi1dWheW/gWEZPvppOPneHEUZ/Naw065vnM=
-github.com/insomniacslk/tapo v1.1.0/go.mod h1:1wuMYu0+alZ4oE4BIzxAwQNveZgbb2tRqiIUwIe7SZE=
+github.com/insomniacslk/tapo v1.2.0 h1:Lg51FF0JI+czehSdbGKR1sRf6K4lLfGAWzhzdiqn68A=
+github.com/insomniacslk/tapo v1.2.0/go.mod h1:PGkIuiSbrvUfrA4oySwMY/9w4uPBXW+KYgvaTJVy3uE=
 github.com/insomniacslk/xjson v0.0.0-20240821125711-1236daaf6808 h1:BVD0pRpDWgbzkPYACLLPomriAnUGVfFdFoxs7aCLJkY=
 github.com/insomniacslk/xjson v0.0.0-20240821125711-1236daaf6808/go.mod h1:Z4EVr4bVv9LZbbje9xyZEyOLpdCOmCvr5S9BJtrdTfw=
 github.com/klauspost/compress v1.20.1 h1:T7kKElXUMXrUJ2E9QhQhxFtcK5rPyLdsGZvdbLMPdiQ=

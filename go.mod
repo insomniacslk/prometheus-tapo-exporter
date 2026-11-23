@@ -3,13 +3,14 @@ module github.com/insomniacslk/prometheus-tapo-exporter
 go 1.26.0
 
 require (
-	github.com/insomniacslk/tapo v1.1.0
+	github.com/insomniacslk/tapo v1.2.0
 	github.com/insomniacslk/xjson v0.0.0-20240821125711-1236daaf6808
 	github.com/prometheus/client_golang v1.25.0
 	github.com/unpoller/unifi v0.4.3
 )
 
 require (
+	filippo.io/nistec v0.0.4 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/brianvoe/gofakeit/v6 v6.28.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
